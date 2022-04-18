@@ -1,0 +1,21 @@
+{
+  "name": "koinly-to-cointracker-csv",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx tsc",
+    "start": "node dist/koinly-to-cointracker-csv.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^17.0.24",
+    "argparse": "^2.0.1",
+    "typescript": "^4.6.3"
+  },
+  "devDependencies": {
+    "@types/argparse": "^2.0.10"
+  }
+}
