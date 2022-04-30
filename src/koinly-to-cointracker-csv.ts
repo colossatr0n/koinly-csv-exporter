@@ -1,77 +1,15 @@
 #!/usr/bin/env node
 'use strict';
  
+// Get json data from https://api.koinly.io/api/transactions?per_page=10&order=date
+
 import { ArgumentParser } from 'argparse';
 import { readFileSync, writeFileSync } from 'fs';
+import { CoinTrackerTag } from './enum/coin-tracker-tag.enum';
+import { KoinlyLabel } from './enum/koinly-label.enum';
+import { KoinlyType } from './enum/koinly-type.enum';
+import { Transaction } from './model/transaction.model';
  
-
-interface Transaction {
-    type: String
-    from: Data
-    to: Data
-    fee: Data
-    label: String
-    date: Date
-    ignored: boolean
-}
-
-interface Data {
-    amount: String
-    currency: Currency
-    wallet: Wallet
-}
-
-interface Wallet {
-    name: String
-}
-
-interface Currency {
-    symbol: String
-}
-
-enum KoinlyType {
-    CRYPTO_WITHDRAWAL = "crypto_withdrawal",
-    CRYPTO_DEPOSIT = "crypto_deposit",
-    EXCHANGE = "exchange",
-    TRANSFER = "transfer",
-}
-
-enum CoinTrackerTag {
-    // send transactions
-    GIFT = "gift",
-    LOST = "lost",
-    DONATION = "donation",
-
-    // receive transactions
-    FORK = "fork",
-    AIRDROP = "airdrop",
-    MINED = "mined",
-    PAYMENT = "payment",
-    STAKED = "staked"
-
-    // trades and transfers cannot have tagged values
-}
-
-enum KoinlyLabel {
-    AIRDROP = "airdrop",
-    FORK = "fork",
-    MINING = "mining",
-    STAKING = "staking",
-    LOAN_INTEREST = "loan_interest",
-    OTHER_INCOME = "other_income",
-    GIFT = "gift",
-    LOST = "lost",
-    COST = "cost",
-    MARGIN_INTEREST_FEE = "margin_interest_fee",
-    MARGIN_TRADE_FEE = "margin_trade_fee",
-    REALIZED_GAIN = "realized_gain",
-    SWAP = "swap",
-    LIQUIDITY_IN = "liquidity_in",
-    LIQUIDITY_OUT = "liquidity_out",
-    NO_LABEL = "no_label",
-    FROM_POOL = "from_pool",
-    TO_POOL = "to_pool",
-}
 
 const CoinTrackerTagByKoinlyLabel = new Map<KoinlyLabel, CoinTrackerTag>([
     [KoinlyLabel.GIFT, CoinTrackerTag.GIFT],
@@ -82,24 +20,7 @@ const CoinTrackerTagByKoinlyLabel = new Map<KoinlyLabel, CoinTrackerTag>([
     [KoinlyLabel.STAKING, CoinTrackerTag.STAKED],
 ])
 
-// Be sure to update ORDERED_REQ_HEADERS and ORDERED_OPT_HEADERS when adding members
-enum Header {
-    DATE = "Date",
-    RECEIVED_QUANTITY = "Received Quantity",
-    RECEIVED_CURRENCY = "Received Currency",
-    SENT_QUANTITY = "Sent Quantity",
-    SENT_CURRENCY = "Sent Currency",
-    FEE_AMOUNT = "Fee Amount",
-    FEE_CURRENCY = "Fee Currency",
-    TAG = "Tag",
-    // Optional
-    TYPE= "Type",
-    // Koinly's "tag" type
-    LABEL= "Label",
-    RECEIVER_WALLET = "Receiver Wallet",
-    SENDER_WALLET = "Sender Wallet",
-}
-
+// Keep this in sync with Header
 const ORDERED_REQ_HEADERS = [
     Header.DATE,
     Header.RECEIVED_QUANTITY,
@@ -117,6 +38,10 @@ const ORDERED_OPT_HEADERS = [
     Header.LABEL,
     Header.RECEIVER_WALLET,
     Header.SENDER_WALLET,
+    Header.RECEIVER_COST_BASIS,
+    Header.SENDER_COST_BASIS,
+    Header.GAIN,
+    Header.DESCRIPTION,
 ]
 
 const ORDERED_ALL_HEADERS = [
@@ -125,7 +50,15 @@ const ORDERED_ALL_HEADERS = [
 ]
 
 const HEADER_GETTERS = new Map<Header, ValueGetter>([
-    [Header.DATE, (t: Transaction) => t.date],
+    [Header.DATE, (t: Transaction) => {
+        const time = t.date.split("T")[1].slice(0, 8) // hh:mm:ss
+        const date = t.date.split("T")[0] // YYYY-MM-dd
+        const year = date.slice(0, 4) //YYYY
+        const month = date.slice(5, 7) // MM
+        const day = date.slice(8, 10) // dd
+        // format is MM/dd/YYYY hh:mm:ss
+        return `${month}/${day}/${year} ${time}`
+    }],
     [Header.RECEIVED_QUANTITY, (t: Transaction) => t.to?.amount],
     [Header.RECEIVED_CURRENCY, (t: Transaction) => t.to?.currency.symbol],
     [Header.SENT_QUANTITY, (t: Transaction) => t.from?.amount],
@@ -136,7 +69,11 @@ const HEADER_GETTERS = new Map<Header, ValueGetter>([
     [Header.TYPE, (t: Transaction) => t.type],
     [Header.LABEL, (t: Transaction) => t.label],
     [Header.RECEIVER_WALLET, (t: Transaction) => t.to?.wallet.name],
-    [Header.SENDER_WALLET, (t: Transaction) => t.from?.wallet.name]
+    [Header.SENDER_WALLET, (t: Transaction) => t.from?.wallet.name],
+    [Header.RECEIVER_COST_BASIS, (t: Transaction) => t.to?.cost_basis],
+    [Header.SENDER_COST_BASIS, (t: Transaction) => t.from?.cost_basis],
+    [Header.GAIN, (t: Transaction) => t.gain],
+    [Header.DESCRIPTION, (t: Transaction) => t.description],
 ])
 
 type ValueGetter = (t: Transaction) => any;
@@ -158,24 +95,27 @@ function createCsv(pages: any[], headerGetters: Map<Header, ValueGetter>) {
 
     trans.forEach(tran => {
         if (tran.type == KoinlyType.CRYPTO_DEPOSIT) {
-            if (HEADER_GETTERS.get(Header.SENT_QUANTITY)?.(tran)
-                || HEADER_GETTERS.get(Header.SENT_CURRENCY)?.(tran)
-                || HEADER_GETTERS.get(Header.FEE_AMOUNT)?.(tran)) {
-                    throw "Receive/deposit transactions: " +
-                    "Should have empty values for the sent quantity and sent currency " +
-                    "Received Quantity should *NOT* include fees "
-                }    
+            if (!isValidDeposit(tran)) {
+                throw "Receive/deposit transactions: " +
+                "Should have empty values for the sent quantity and sent currency " +
+                "Received Quantity should *NOT* include fees "
+            }
         }
         if (tran.type == KoinlyType.CRYPTO_WITHDRAWAL) {
-            if (HEADER_GETTERS.get(Header.RECEIVED_QUANTITY)?.(tran)
-                || HEADER_GETTERS.get(Header.RECEIVED_CURRENCY)?.(tran)
-                || HEADER_GETTERS.get(Header.FEE_AMOUNT)?.(tran)) {
-                    "Send/withdrawal transactions: " +
+            if (!isValidWithdrawal(tran)) {
+                "Send/withdrawal transactions: " +
                     "Should have empty values for the received quantity and received currency " +
-                    "Sent Quantity should include fees "
+                    "Sent Quantity should include fees ";
+            }
+        }
+        if (tran.type == KoinlyType.EXCHANGE) {
+            if (!isValidExchange(tran)) {
+                    throw "Trade transactions: " +
+                    "Should have values for the received quantity, received currency, sent quantity, and sent currency"
                 }    
         }
     })
+
 
     const transCsvLines = parseTrans(trans, headerGetters)
     return [
@@ -184,6 +124,24 @@ function createCsv(pages: any[], headerGetters: Map<Header, ValueGetter>) {
         ].join("\n")
 }
 
+function isValidExchange(tran: Transaction) {
+    return HEADER_GETTERS.get(Header.SENT_QUANTITY)!(tran)
+        && HEADER_GETTERS.get(Header.SENT_CURRENCY)!(tran)
+        && HEADER_GETTERS.get(Header.RECEIVED_QUANTITY)!(tran)
+        && HEADER_GETTERS.get(Header.RECEIVED_CURRENCY)!(tran)
+}
+
+export function isValidDeposit(tran: Transaction) {
+    return !(HEADER_GETTERS.get(Header.SENT_QUANTITY)!(tran)
+        || HEADER_GETTERS.get(Header.SENT_CURRENCY)!(tran)
+        || HEADER_GETTERS.get(Header.FEE_AMOUNT)!(tran))
+}
+
+export function isValidWithdrawal(tran: Transaction) {
+    return !(HEADER_GETTERS.get(Header.RECEIVED_QUANTITY)!(tran)
+        || HEADER_GETTERS.get(Header.RECEIVED_CURRENCY)!(tran)
+        || HEADER_GETTERS.get(Header.FEE_AMOUNT)!(tran))
+}
 
 function main(args: any) {
     let pages = JSON.parse(readFileSync(args.pages, 'utf8').toString())
