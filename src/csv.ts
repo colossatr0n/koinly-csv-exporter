@@ -1,5 +1,4 @@
-#!/usr/bin/env node
-'use strict';
+ 
 // Get json data from https://api.koinly.io/api/transactions?per_page=10&order=date
 
 import { KoinlyType } from './enum/koinly-type.enum';
@@ -8,17 +7,6 @@ import { Header } from './type/header.type';
 import { ValueGetterAbstractFactory } from './factory/value-getter.abstract.factory';
 import { Validator } from './validator/validator';
  
-
-function parseTrans(transactions: KoinlyTransaction[], headerGetters: ValueGetterAbstractFactory<Header>, orderedHeaders: Header[]): any[]{
-    return transactions
-        .filter(t => !t.ignored)
-        .map(t => 
-            orderedHeaders.map(header => headerGetters.get(header))
-                .filter(g => !!g)
-                .map(g => g!(t))
-                .join(",")
-            )
-}
 
 export function createCsv<T extends Header>(
         pages: any[], 
@@ -56,4 +44,15 @@ export function createCsv<T extends Header>(
         [...headers].join(","),
          ...transCsvLines
         ].join("\n")
+}
+
+export function parseTrans(transactions: KoinlyTransaction[], headerGetters: ValueGetterAbstractFactory<Header>, orderedHeaders: Header[]): any[]{
+    return transactions
+        .filter(t => !t.ignored)
+        .map(t => 
+            orderedHeaders.map(header => headerGetters.get(header))
+                .filter(g => !!g)
+                .map(g => g!(t))
+                .join(",")
+            )
 }

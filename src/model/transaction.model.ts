@@ -1,4 +1,4 @@
-export interface Transaction {
+export interface KoinlyTransaction {
     type: string
     from?: Data
     to?: Data
