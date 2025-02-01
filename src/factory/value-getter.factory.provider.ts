@@ -1,18 +1,20 @@
-import { KoinlyValueGetterFactory } from "./koinly-value-getter.factory";
-import { InputSourceType } from "../enum/input-source.enum";
-import { ValueGetterAbstractFactoryProvider } from "./value-getter.abstract.factory.provider";
+import { CoinTrackerValueGetterFactory } from "./cointracker-value-getter.factory";
 import { ValueGetterAbstractFactory } from "./value-getter.abstract.factory";
+import { OutputType } from "../enum/output-type.enum";
+import { Header } from "../type/header.type";
 
-export class ValueGetterFactoryProvider implements ValueGetterAbstractFactoryProvider {
+export class ValueGetterFactoryProvider {
 
-    constructor(
-        private koinlyValueGetterFactory: KoinlyValueGetterFactory
-    ) {}
+    private coinTrackerValueGetterFactory: CoinTrackerValueGetterFactory = new CoinTrackerValueGetterFactory();
 
-    get(inputSource: InputSourceType): ValueGetterAbstractFactory {
-        switch (inputSource) {
-            case InputSourceType.KOINLY:
-                return this.koinlyValueGetterFactory
+    constructor() {}
+
+    get<T extends Header>(outputType: OutputType): ValueGetterAbstractFactory<T> {
+        switch (outputType) { 
+            case OutputType.COIN_TRACKER:
+                return this.coinTrackerValueGetterFactory
+            default:
+                return this.coinTrackerValueGetterFactory;
         }
     }
 }

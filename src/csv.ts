@@ -8,17 +8,6 @@ import { ValueGetterAbstractFactory } from './factory/value-getter.abstract.fact
 import { Validator } from './validator/validator';
  
 
-function parseTrans(transactions: KoinlyTransaction[], headerGetters: ValueGetterAbstractFactory<Header>, orderedHeaders: Header[]): any[]{
-    return transactions
-        .filter(t => !t.ignored)
-        .map(t => 
-            orderedHeaders.map(header => headerGetters.get(header))
-                .filter(g => !!g)
-                .map(g => g!(t))
-                .join(",")
-            )
-}
-
 export function createCsv<T extends Header>(
         pages: any[], 
         headers: Header[],
@@ -55,4 +44,15 @@ export function createCsv<T extends Header>(
         [...headers].join(","),
          ...transCsvLines
         ].join("\n")
+}
+
+export function parseTrans(transactions: KoinlyTransaction[], headerGetters: ValueGetterAbstractFactory<Header>, orderedHeaders: Header[]): any[]{
+    return transactions
+        .filter(t => !t.ignored)
+        .map(t => 
+            orderedHeaders.map(header => headerGetters.get(header))
+                .filter(g => !!g)
+                .map(g => g!(t))
+                .join(",")
+            )
 }

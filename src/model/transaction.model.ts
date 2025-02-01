@@ -1,7 +1,3 @@
-export interface Transaction {
-    ignored: boolean
-}
-
 export interface KoinlyTransaction {
     type: string
     from?: Data

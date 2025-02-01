@@ -1,3 +1,3 @@
-import { Transaction } from "../model/transaction.model";
+import { KoinlyTransaction } from "../model/transaction.model";
 
-export type ValueGetter<T> = (t: T) => any;  
+export type ValueGetter = (t: KoinlyTransaction) => any;  
