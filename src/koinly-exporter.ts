@@ -1,3 +1,6 @@
+#!/usr/bin/env node
+'use strict';
+
 import { ArgumentParser } from "argparse";
 import { OutputType } from "./enum/output-type.enum";
 import { readFileSync, writeFileSync } from "fs";
