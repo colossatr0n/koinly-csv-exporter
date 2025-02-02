@@ -8,7 +8,7 @@
  *
  * View transactions on Koinly and use `util/fetch-all-transactions.js` (read the HOW TO there).
  * Then build and run program:
- *     npm run build-start-turbotax -- some-koinly-data.json -o output.csv 
+ *     npm run start -- some-koinly-data.json -o output.csv -t <OUTPUT_TYPE> 
  *
  * NOTE:
  * Be aware that if you open the CSV in Excel, it might change the date format to be incompatible with 
