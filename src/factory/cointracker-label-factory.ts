@@ -1,4 +1,4 @@
-import { CoinTrackerTag } from "../enum/coin-tracker-tag.enum"
+import { CoinTrackerTag } from "../enum/cointracker-tag.enum"
 import { KoinlyLabel } from "../enum/koinly-label.enum"
 
 export class CoinTrackerLabelFactory {

@@ -8,47 +8,49 @@ import { ValueGetterAbstractFactory } from './factory/value-getter.abstract.fact
 import { Validator } from './validator/validator';
  
 
-export function createCsv<T extends Header>(
-        pages: any[], 
+export function createCsv(
+        txns: any[], 
         headers: Header[],
-        valueGetterFactory: ValueGetterAbstractFactory<T>,
+        valueGetterFactory: ValueGetterAbstractFactory,
         validator: Validator
     ) {
-    const trans = pages
 
-    trans.forEach(tran => {
-        if (tran.type == KoinlyType.CRYPTO_DEPOSIT) {
-            if (!validator.isValidDeposit(tran, valueGetterFactory)) {
+    txns.forEach(txn => {
+        if (txn.type == KoinlyType.CRYPTO_DEPOSIT) {
+            if (!validator.isValidDeposit(txn, valueGetterFactory)) {
                 throw "Receive/deposit transactions: " +
                 "Should have empty values for the sent quantity and sent currency " +
                 "Received Quantity should *NOT* include fees "
             }
         }
-        if (tran.type == KoinlyType.CRYPTO_WITHDRAWAL) {
-            if (!validator.isValidWithdrawal(tran, valueGetterFactory)) {
+        if (txn.type == KoinlyType.CRYPTO_WITHDRAWAL) {
+            if (!validator.isValidWithdrawal(txn, valueGetterFactory)) {
                 "Send/withdrawal transactions: " +
                     "Should have empty values for the received quantity and received currency " +
                     "Sent Quantity should include fees ";
             }
         }
-        if (tran.type == KoinlyType.EXCHANGE) {
-            if (!validator.isValidExchange(tran, valueGetterFactory)) {
+        if (txn.type == KoinlyType.EXCHANGE) {
+            if (!validator.isValidExchange(txn, valueGetterFactory)) {
                     throw "Trade transactions: " +
                     "Should have values for the received quantity, received currency, sent quantity, and sent currency"
                 }    
         }
     })
 
-    const transCsvLines = parseTrans(trans, valueGetterFactory, headers)
+    const txnsCsvLines = parseTrans(txns, valueGetterFactory, headers)
     return [
         [...headers].join(","),
-         ...transCsvLines
+         ...txnsCsvLines
         ].join("\n")
 }
 
-export function parseTrans(transactions: KoinlyTransaction[], headerGetters: ValueGetterAbstractFactory<Header>, orderedHeaders: Header[]): any[]{
+export function parseTrans(transactions: KoinlyTransaction[], headerGetters: ValueGetterAbstractFactory, orderedHeaders: Header[]): any[]{
     return transactions
         .filter(t => !t.ignored)
+        .sort((t1, t2) => {
+            return +new Date(t1.date) - +new Date(t2.date);
+        })
         .map(t => 
             orderedHeaders.map(header => headerGetters.get(header))
                 .filter(g => !!g)

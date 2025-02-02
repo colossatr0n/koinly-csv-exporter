@@ -1,4 +1,6 @@
 export interface KoinlyTransaction {
+    id: string,
+    txhash: string,
     type: string
     from?: Data
     to?: Data
@@ -8,17 +10,20 @@ export interface KoinlyTransaction {
     ignored: boolean
     gain?: string
     description?: string
+    net_value: string
+    net_worth: any
 }
 
 interface Data {
     amount: string
     currency: Currency
-    wallet: Wallet
+    wallet?: Wallet
     cost_basis?: string
 }
 
 interface Wallet {
-    name: string
+    name: string,
+    pool: boolean
 }
 
 interface Currency {

@@ -2,11 +2,12 @@ import { CoinTrackerHeader } from "../enum/cointracker-header.enum"
 import { KoinlyLabel } from "../enum/koinly-label.enum"
 import { OptionalHeader } from "../enum/optional-header.enum"
 import { KoinlyTransaction } from "../model/transaction.model"
+import { Header } from "../type/header.type"
 import { ValueGetter } from "../type/value-getter.type"
 import { CoinTrackerLabelFactory } from "./cointracker-label-factory"
 import { ValueGetterAbstractFactory } from "./value-getter.abstract.factory"
 
-export class CoinTrackerValueGetterFactory implements ValueGetterAbstractFactory<CoinTrackerHeader | OptionalHeader> {
+export class CoinTrackerValueGetterFactory implements ValueGetterAbstractFactory {
 
     private coinTrackerLabelFactory: CoinTrackerLabelFactory;
 
@@ -16,7 +17,7 @@ export class CoinTrackerValueGetterFactory implements ValueGetterAbstractFactory
         this.coinTrackerLabelFactory = coinTrackerLabelFactory
     }
 
-    get(header: CoinTrackerHeader | OptionalHeader): ValueGetter {
+    get(header: Header): ValueGetter {
         switch (header) {
             case CoinTrackerHeader.DATE: { 
                 return (t: KoinlyTransaction) => {
@@ -39,8 +40,8 @@ export class CoinTrackerValueGetterFactory implements ValueGetterAbstractFactory
             // Optional
             case OptionalHeader.TYPE: return (t: KoinlyTransaction) => t.type
             case OptionalHeader.LABEL: return (t: KoinlyTransaction) => t.label
-            case OptionalHeader.RECEIVER_WALLET: return (t: KoinlyTransaction) => t.to?.wallet.name
-            case OptionalHeader.SENDER_WALLET: return (t: KoinlyTransaction) => t.from?.wallet.name
+            case OptionalHeader.RECEIVER_WALLET: return (t: KoinlyTransaction) => t.to?.wallet?.name
+            case OptionalHeader.SENDER_WALLET: return (t: KoinlyTransaction) => t.from?.wallet?.name
             case OptionalHeader.RECEIVER_COST_BASIS: return (t: KoinlyTransaction) => t.to?.cost_basis
             case OptionalHeader.SENDER_COST_BASIS: return (t: KoinlyTransaction) => t.from?.cost_basis
             case OptionalHeader.GAIN: return (t: KoinlyTransaction) => t.gain

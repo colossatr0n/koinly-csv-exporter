@@ -1,12 +1,12 @@
 {
-  "name": "koinly-to-cointracker-csv",
+  "name": "koinly-exporter",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx tsc",
-    "start": "node dist/koinly-to-cointracker-csv.js"
+    "start": "node dist/koinly-exporter.js"
   },
   "author": "",
   "license": "ISC",
