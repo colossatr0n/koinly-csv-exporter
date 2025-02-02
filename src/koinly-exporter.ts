@@ -24,7 +24,7 @@ import { ValueGetterFactoryProvider } from "./factory/value-getter.factory.provi
 import { ValidatorFactory } from "./factory/validator-factory-provider";
 import { Header } from "./type/header.type";
 import { OptionalHeader } from "./enum/optional-header.enum";
-import { createCsv } from "./csv";
+import { createCsv } from "./csv/csv";
 import { RequiredHeadersFactory } from "./factory/required-headers-factory";
 
 

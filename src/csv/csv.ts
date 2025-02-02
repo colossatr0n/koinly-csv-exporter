@@ -1,11 +1,11 @@
  
 // Get json data from https://api.koinly.io/api/transactions?per_page=10&order=date
 
-import { KoinlyType } from './enum/koinly-type.enum';
-import { KoinlyTransaction } from './model/transaction.model';
-import { Header } from './type/header.type';
-import { ValueGetterAbstractFactory } from './factory/value-getter.abstract.factory';
-import { Validator } from './validator/validator';
+import { KoinlyType } from '../enum/koinly-type.enum';
+import { KoinlyTransaction } from '../model/transaction.model';
+import { Header } from '../type/header.type';
+import { ValueGetterAbstractFactory } from '../factory/value-getter.abstract.factory';
+import { Validator } from '../validator/validator';
  
 
 export function createCsv(
