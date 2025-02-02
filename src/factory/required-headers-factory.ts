@@ -2,11 +2,9 @@ import { CoinTrackerHeader } from "../enum/cointracker-header.enum"
 import { OptionalHeader } from "../enum/optional-header.enum"
 import { OutputType } from "../enum/output-type.enum"
 import { TurboTaxHeader } from "../enum/turbotax-header.enum"
-import { Header } from "../type/header.type"
 
 export class RequiredHeadersFactory {
 
-    // Keep this in sync with Header
     private static COIN_TRACKER_HEADERS = [
         CoinTrackerHeader.DATE,
         CoinTrackerHeader.RECEIVED_QUANTITY,
@@ -18,7 +16,6 @@ export class RequiredHeadersFactory {
         CoinTrackerHeader.TAG,
     ]
     
-    // Keep this in sync with Header
     private static TURBO_TAX_HEADERS = [
         TurboTaxHeader.DATE,
         TurboTaxHeader.TYPE,
